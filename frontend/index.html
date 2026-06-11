@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MVPA Coach</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <div id="topbar">
+    <span class="logo">MVPA Coach</span>
+  </div>
+
+  <div id="layout">
+
+    <section id="chat-panel">
+      <div class="panel-header">
+        <h2>Coach</h2>
+      </div>
+      <div id="messages"></div>
+      <div id="input-row">
+        <input id="msg-input" type="text" placeholder="Message your coach…" autocomplete="off">
+        <button id="send-btn">Send</button>
+      </div>
+    </section>
+
+    <section id="goals-panel">
+      <div class="panel-header">
+        <h2>Goals</h2>
+      </div>
+      <ul id="goals-list"></ul>
+      <p id="goals-hint">Tell your coach "help me write a new SMART goal" to get started.</p>
+    </section>
+
+    <section id="wearable-panel">
+      <div class="panel-header">
+        <h2>Self-Monitoring</h2>
+        <button id="refresh-btn">Refresh</button>
+      </div>
+      <div id="wearable-data"><p class="wearable-placeholder">Press Refresh to load your wearable data.</p></div>
+    </section>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

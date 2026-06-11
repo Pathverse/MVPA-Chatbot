@@ -1,0 +1,292 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --red:       #FF385C;
+  --red-dark:  #E31C5F;
+  --bg:        #F7F7F7;
+  --surface:   #FFFFFF;
+  --border:    #EBEBEB;
+  --text:      #222222;
+  --muted:     #717171;
+  --radius:    12px;
+  --shadow:    0 2px 12px rgba(0,0,0,0.08);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top bar */
+#topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+#topbar .logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: -0.3px;
+}
+
+/* Layout */
+#layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  flex: 1;
+  overflow: hidden;
+  gap: 16px;
+  padding: 16px;
+}
+
+section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Section headers */
+.panel-header {
+  height: 52px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-header h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* Chat panel */
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: var(--red);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.bubble.coach {
+  align-self: flex-start;
+  background: var(--bg);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+#input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#msg-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color 0.15s;
+}
+
+#msg-input:focus { border-color: var(--red); }
+
+#send-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 24px;
+  background: var(--red);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+#send-btn:hover { background: var(--red-dark); }
+
+/* Goals panel */
+#goals-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#goals-list li {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  border-left: 3px solid var(--red);
+}
+
+#goals-list li .goal-meta {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+#goals-hint {
+  padding: 12px 20px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+/* Wearable panel */
+#refresh-btn {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 14px;
+  border: 1.5px solid var(--red);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--red);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+#refresh-btn:hover { background: var(--red); color: #fff; }
+
+#wearable-data {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wearable-placeholder { font-size: 0.85rem; color: var(--muted); }
+
+.w-period { font-size: 0.72rem; color: var(--muted); text-align: center; letter-spacing: 0.03em; }
+
+/* Ring */
+.ring-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 16px;
+}
+
+.ring-wrap { position: relative; width: 168px; height: 168px; }
+
+.ring-svg { width: 168px; height: 168px; transform: rotate(-90deg); }
+
+.ring-track { fill: none; stroke: var(--border); stroke-width: 8; }
+
+.ring-fill {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.6s ease;
+}
+
+.ring-fill--done { stroke: #00a699; }
+
+.ring-cap { filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.35)); }
+
+.ring-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.ring-value { font-size: 1.9rem; font-weight: 700; color: var(--text); line-height: 1; }
+.ring-unit  { font-size: 0.7rem; color: var(--muted); }
+
+.ring-meta { text-align: center; }
+.ring-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.ring-sub   { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.ring-sub--done { color: #00a699; font-weight: 600; }
+
+/* Daily bars */
+.w-section { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+
+.w-section-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); text-align: center; flex-shrink: 0; }
+
+.day-dots {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.day-col { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; height: 100%; }
+
+.day-bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; }
+
+.day-bar { width: 100%; background: var(--red); border-radius: 4px 4px 0 0; min-height: 4px; opacity: 0.9; }
+
+.day-mins { font-size: 0.7rem; font-weight: 600; color: var(--text); }
+
+.day-label { font-size: 0.6rem; color: var(--muted); white-space: nowrap; }
+
+/* Scrollbar polish */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
