@@ -28,13 +28,13 @@ improvement and make subsequent refinements prior to real-world deployment
 
 ## Contributions 
 
-•	An LLM-based chatbot system for MVPA SMART goal setting and self-monitoring, targeting
+1. An LLM-based chatbot system for MVPA SMART goal setting and self-monitoring, targeting
    the CSEP 24-hour movement guideline  integrating persistent memory, wearable data via an
    MCP server pipeline, and conversational physical activity support providing a documented 
    architecture for LLM-based PABCC chatbot systems.
-•	A pre-deployment mixed method LLM chatbot and surrounding mobile application system 
+2. A pre-deployment mixed method LLM chatbot and surrounding mobile application system 
    using validated usability scales and a mini focus group interview.
-•	Evidence of the usability and feasibility of deploying an LLM system for SMART 
+3. Evidence of the usability and feasibility of deploying an LLM system for SMART 
    goal-based MVPA self-monitoring in adults, contributing to the emerging literature on 
    PABCC LLM chatbots.
 
