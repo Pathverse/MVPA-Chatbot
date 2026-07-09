@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
+docs/
 .DS_Store
 .claude/
-expected_behaviour.md
+serviceAccountKey.json
