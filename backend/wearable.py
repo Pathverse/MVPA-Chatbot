@@ -1,29 +1,29 @@
-import json
-from datetime import timedelta, timezone, datetime
+"""FastAPI router exposing the participant's synced wearable MVPA data to the self-monitoring panel."""
+import logging
 
-from fastapi import APIRouter, HTTPException
-from mcp import mcp_client
+from fastapi import APIRouter
+
+from db.user_store import current_user_id, get_wearable_summary, get_weekly_totals
+from db.wearable_sync import get_current_week_full, get_rolling_7d_daily, sync_wearable_data
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-_DATA_TYPES = ["mvpa", "steps", "hrv", "ema"]
 
 
 @router.get("")
 def get_wearable():
-    now = datetime.now(timezone.utc)
-    week_ago = (now - timedelta(days=6)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    today_str = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    payloads = [
-        {"key": t, "type": t, "from": week_ago, "to": today_str}
-        for t in _DATA_TYPES
-    ]
+    user_id = current_user_id()
     try:
-        raw = mcp_client.call_tool("get_phi", {"payloads": payloads})
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=str(e))
-    try:
-        parsed = json.loads(raw)
-    except (json.JSONDecodeError, TypeError):
-        parsed = raw
-    return {"data": parsed, "from": week_ago[:10], "to": today_str[:10]}
+        sync_wearable_data(user_id)
+    except Exception:
+        logger.exception("wearable sync failed; using existing stored data")
+
+    summary = get_wearable_summary(user_id)
+    return {
+        "rolling_7d_total": summary.get("mvpa_rolling_7d_total", 0),
+        "trend": summary.get("mvpa_trend", ""),
+        "current_week": get_current_week_full(user_id),
+        "rolling_7d_daily": get_rolling_7d_daily(user_id),
+        "weekly_totals": get_weekly_totals(user_id),
+    }
