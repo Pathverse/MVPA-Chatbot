@@ -69,6 +69,13 @@ def test_message_is_keyed_by_authenticated_participant(monkeypatch, as_participa
     assert recorded == ["42"]
 
 
+def test_health_is_public():
+    # load balancers and uptime checks probe without credentials
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
 def test_frontend_not_served_by_default():
     # SERVE_FRONTEND is unset in tests; the browser UI has no Pathverse login, so the
     # app must not expose it unless explicitly enabled for local development.

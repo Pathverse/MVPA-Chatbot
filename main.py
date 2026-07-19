@@ -15,6 +15,11 @@ app = FastAPI()
 app.include_router(session_router, prefix="/session")
 app.include_router(wearable_router, prefix="/api/wearable")
 
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 # The browser UI has no Pathverse login, so it is opt-in for local development only;
 # the Pathverse app talks straight to the API routes.
 if SERVE_FRONTEND:
