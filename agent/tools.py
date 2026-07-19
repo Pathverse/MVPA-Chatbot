@@ -2,7 +2,8 @@
 import json
 
 from study.onboarding import GOAL_FIELDS, is_onboarding_complete
-from db.user_store import current_user_id, get_user, mark_onboarding_complete, update_user
+from db.user_store import get_user, mark_onboarding_complete, update_user
+from pathverse_mcp import identity
 
 _IMMUTABLE_POST_ONBOARDING = {"name", "user_reported_mvpa_mins"}
 NUMERIC_FIELDS = {"age", "user_reported_mvpa_mins"}
@@ -109,7 +110,7 @@ def _update_field(field: str, value: str) -> dict:
     if field not in _UPDATABLE_FIELDS:
         return {"error": f"Field {field!r} cannot be updated."}
 
-    user_id = current_user_id()
+    user_id = identity.current().user_id
     user_data = get_user(user_id) or {}
     if field in _IMMUTABLE_POST_ONBOARDING and user_data.get("onboarding_complete"):
         return {"error": f"Field {field!r} cannot be changed after onboarding."}
@@ -150,7 +151,7 @@ def _add_goal(text: str) -> dict:
     text = (text or "").strip()
     if not text:
         return {"error": "Goal text is empty."}
-    user_id = current_user_id()
+    user_id = identity.current().user_id
     user_data = get_user(user_id) or {}
     goals = _current_goals(user_data)
     if len(goals) >= MAX_GOALS:
@@ -173,7 +174,7 @@ def _edit_goal(position, text: str) -> dict:
         position = int(position)
     except (TypeError, ValueError):
         return {"error": f"Position must be a number, got {position!r}."}
-    user_id = current_user_id()
+    user_id = identity.current().user_id
     goals = _current_goals(get_user(user_id) or {})
     if not 1 <= position <= len(goals):
         return {"error": f"No goal at position {position}."}
@@ -187,7 +188,7 @@ def _remove_goal(position) -> dict:
         position = int(position)
     except (TypeError, ValueError):
         return {"error": f"Position must be a number, got {position!r}."}
-    user_id = current_user_id()
+    user_id = identity.current().user_id
     user_data = get_user(user_id) or {}
     goals = _current_goals(user_data)
     if not 1 <= position <= len(goals):

@@ -2,18 +2,19 @@
 import asyncio
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from agent.messages import process_message
+from backend.auth import require_participant
 from config import MAX_HISTORY_TURNS
+from pathverse_mcp.identity import Participant
 from study.onboarding import get_next_onboarding_field, goal_slots, is_onboarding_complete, opening_question
 from study.context import build_user_context
 from db.user_store import (
     add_transcript_message,
     clear_transcript,
     create_user,
-    current_user_id,
     get_transcript_history,
     get_user,
     get_wearable_summary,
@@ -46,8 +47,7 @@ class MessageIn(BaseModel):
     message: str
 
 
-def _get_or_create_user():
-    user_id = current_user_id()
+def _get_or_create_user(user_id):
     user_data = get_user(user_id)
     if user_data is None:
         create_user(user_id)
@@ -62,9 +62,9 @@ def _with_wearable_summary(user_id, user_data):
 
 
 @router.post("/start")
-def start_session():
-    user_id = current_user_id()
-    user_data = _get_or_create_user()
+def start_session(participant: Participant = Depends(require_participant)):
+    user_id = participant.user_id
+    user_data = _get_or_create_user(user_id)
 
     try:
         sync_wearable_data(user_id)
@@ -95,8 +95,8 @@ def start_session():
 
 
 @router.post("/message")
-async def send_message(body: MessageIn):
-    user_id = current_user_id()
+async def send_message(body: MessageIn, participant: Participant = Depends(require_participant)):
+    user_id = participant.user_id
     text = body.message.strip()
 
     if text == RESET_PHRASE:
@@ -111,7 +111,7 @@ async def send_message(body: MessageIn):
         record_exchange(user_id, text, HELP_TEXT)
         return {"response": HELP_TEXT, "field_updated": False}
 
-    user_data = _get_or_create_user()
+    user_data = _get_or_create_user(user_id)
 
     if text.lower() == ONBOARD_PHRASE:
         if is_onboarding_complete(user_data):

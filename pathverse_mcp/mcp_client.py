@@ -1,45 +1,51 @@
-"""JSON-RPC client for the Pathverse MCP server (tool listing and calls) with proactive JWT re-minting."""
+"""JSON-RPC client for the Pathverse MCP server (tool listing and calls) with proactive
+JWT re-minting, one minted session per participant.
+
+The participant comes from the request-bound identity (pathverse_mcp.identity), so the
+deep call sites in agent/ and db/ never pass credentials explicitly."""
 import json
 import time
 
 import requests
+
 from config import MCP_URL
+from pathverse_mcp import identity
 from pathverse_mcp.token_client import mint_mcp_token
 
-# The minted JWT is only valid for ~30 minutes and ~50 tool calls (the server was
-# designed around single chat sessions staying under 30 minutes). This process is
-# long-running across many sessions, so we remint proactively before either limit
-# instead of relying on the token minted once at import time.
+# A minted JWT is only valid for ~30 minutes and ~50 tool calls (the MCP server was
+# designed around single chat sessions staying under 30 minutes). Sessions here span
+# many chats, so we remint proactively before either limit.
 _TOKEN_TTL_SECONDS = 25 * 60
 _TOKEN_MAX_CALLS = 45
 
-_token = None
-_token_minted_at = 0.0
-_token_call_count = 0
+_sessions = {}  # participant token -> {"jwt": str, "minted_at": float, "calls": int}
 
 
 def _headers():
-    global _token, _token_minted_at, _token_call_count
+    participant = identity.current()
+    session = _sessions.get(participant.token)
     stale = (
-        _token is None
-        or time.monotonic() - _token_minted_at >= _TOKEN_TTL_SECONDS
-        or _token_call_count >= _TOKEN_MAX_CALLS
+        session is None
+        or time.monotonic() - session["minted_at"] >= _TOKEN_TTL_SECONDS
+        or session["calls"] >= _TOKEN_MAX_CALLS
     )
     if stale:
-        _token = mint_mcp_token()
-        _token_minted_at = time.monotonic()
-        _token_call_count = 0
-    _token_call_count += 1
+        session = {
+            "jwt": mint_mcp_token(participant.token),
+            "minted_at": time.monotonic(),
+            "calls": 0,
+        }
+        _sessions[participant.token] = session
+    session["calls"] += 1
     return {
-        "Authorization": f"Bearer {_token}",
+        "Authorization": f"Bearer {session['jwt']}",
         "Content-Type": "application/json",
         "Accept": "application/json, text/event-stream",
     }
 
 
 def _force_remint():
-    global _token
-    _token = None
+    _sessions.pop(identity.current().token, None)
 
 
 def _rpc(method: str, params: dict = None) -> dict:

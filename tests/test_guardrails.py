@@ -1,6 +1,6 @@
 """Tests for the string heuristics in agent/guardrails.py. These make no network calls;
-they do import config, so a valid .env (and serviceAccountKey.json) must be present. Run
-from the project root: `pytest`."""
+tests/conftest.py installs a dummy environment before config loads, so no real .env or
+serviceAccountKey.json is needed. Run from the project root: `pytest`."""
 from agent.guardrails import should_backstop_goal_save, enforce_verbatim_question
 from study.onboarding import ONBOARDING_QUESTIONS
 

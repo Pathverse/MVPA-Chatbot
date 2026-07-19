@@ -4,12 +4,7 @@ from datetime import date as date_cls
 from firebase_admin import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 
-from config import MCP_PARTICIPANT_TOKEN
 from db.client import db
-
-def current_user_id():
-    # One deployment = one participant; their MCP token is the user id (see README).
-    return MCP_PARTICIPANT_TOKEN
 
 # Fields cleared by a hard reset (profile, goals, onboarding).
 RESETTABLE_FIELDS = {

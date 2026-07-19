@@ -1,10 +1,12 @@
 """FastAPI router exposing the participant's synced wearable MVPA data to the self-monitoring panel."""
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from db.user_store import current_user_id, get_wearable_summary, get_weekly_totals
+from backend.auth import require_participant
+from db.user_store import get_wearable_summary, get_weekly_totals
 from db.wearable_sync import get_current_week_full, get_rolling_7d_daily, sync_wearable_data
+from pathverse_mcp.identity import Participant
 
 logger = logging.getLogger(__name__)
 
@@ -12,8 +14,8 @@ router = APIRouter()
 
 
 @router.get("")
-def get_wearable():
-    user_id = current_user_id()
+def get_wearable(participant: Participant = Depends(require_participant)):
+    user_id = participant.user_id
     try:
         sync_wearable_data(user_id)
     except Exception:
