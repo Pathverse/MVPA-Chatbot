@@ -105,10 +105,11 @@ Copy `.env.example` to `.env` and fill in your values:
 ```
 OPENAI_API_KEY=sk-...
 GOOGLE_APPLICATION_CREDENTIALS=serviceAccountKey.json
-MCP_PARTICIPANT_TOKEN=your-participant-token
 MCP_PROGRAM_ID=your-program-id
 MCP_TOKEN_MINT_URL=your-mcp-token-mint-url
 MCP_URL=your-mcp-url
+PATHVERSE_API_URL=https://your-pathverse-server
+SERVE_FRONTEND=false
 ```
 
 `GOOGLE_APPLICATION_CREDENTIALS` points at a Firebase service-account key JSON file for the
@@ -118,7 +119,16 @@ Firestore project.
 uvicorn main:app --reload
 ```
 
-Open `http://localhost:8000`.
+## Authentication & Multi-Tenancy
+
+Every API request must carry the participant's Pathverse token as
+`Authorization: Bearer <token>` — the same header the Pathverse app already sends. The
+server resolves it to a participant id via `GET {PATHVERSE_API_URL}/users/get_user_id/`
+(cached ~10 min); an invalid token gets `401`. All Firestore data and minted MCP tokens
+are keyed per participant, so one deployment serves every participant in the program.
+
+The 3-panel browser UI has no Pathverse login, so it is disabled by default. Set
+`SERVE_FRONTEND=true` for local development and open `http://localhost:8000`.
 
 ## First Use Notes
 
