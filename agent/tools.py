@@ -1,9 +1,12 @@
 """Defines and executes the local function-calling tools (update_field, add/edit/remove_goal) the agent uses to write profile and goal data."""
 import json
+import logging
 
 from study.onboarding import GOAL_FIELDS, is_onboarding_complete
 from db.user_store import get_user, mark_onboarding_complete, update_user
-from pathverse_mcp import identity
+from pathverse_mcp import identity, mcp_client
+
+logger = logging.getLogger(__name__)
 
 _IMMUTABLE_POST_ONBOARDING = {"name", "user_reported_mvpa_mins"}
 NUMERIC_FIELDS = {"age", "user_reported_mvpa_mins"}
@@ -25,6 +28,10 @@ MAX_GOALS = 3
 # Positionally aligned with GOAL_FIELDS so a goal's plan follows it when _remove_goal shifts
 # the remaining goals up to close a gap.
 _PLAN_GOAL_FIELDS = ["plan_goal_1", "plan_goal_2", "plan_goal_3"]
+
+# Pathverse goal id behind each slot (via MCP create_goal), shifted in step with the slots
+# so edits always PATCH the app goal the participant is looking at.
+_SERVER_ID_FIELDS = ["goal_server_id_1", "goal_server_id_2", "goal_server_id_3"]
 
 LOCAL_TOOLS = [
     {
@@ -147,6 +154,40 @@ def _write_goals(user_id: str, goals: list[str]) -> None:
     update_user(user_id, {f: (goals[i] if i < len(goals) else "") for i, f in enumerate(GOAL_FIELDS)})
 
 
+def _extract_goal_id(reply_text: str):
+    try:
+        data = json.loads(reply_text)
+    except (TypeError, ValueError):
+        return None
+    if isinstance(data, dict):
+        if isinstance(data.get("id"), int):
+            return data["id"]
+        inner = data.get("data")
+        if isinstance(inner, dict) and isinstance(inner.get("id"), int):
+            return inner["id"]
+    return None
+
+
+def _push_goal_to_app(user_id: str, position: int, text: str, server_id=None) -> dict:
+    """Write the slot's goal through to the pathverse app (MCP create/update as the
+    authenticated participant). The coached goal must survive an MCP outage, so failures
+    are reported in the tool result — never raised."""
+    try:
+        if server_id:
+            mcp_client.call_tool("update_goal", {"id": server_id, "title": text})
+            return {}
+        reply = mcp_client.call_tool("create_goal", {"title": text})
+        new_id = _extract_goal_id(reply)
+        if new_id is None:
+            logger.warning("create_goal reply had no goal id; slot %s left unmapped", position)
+            return {"app_sync": "failed"}
+        update_user(user_id, {_SERVER_ID_FIELDS[position - 1]: new_id})
+        return {}
+    except Exception:
+        logger.exception("goal write-through to the app failed for slot %s", position)
+        return {"app_sync": "failed"}
+
+
 def _add_goal(text: str) -> dict:
     text = (text or "").strip()
     if not text:
@@ -163,7 +204,8 @@ def _add_goal(text: str) -> dict:
     if not user_data.get("onboarding_complete") and is_onboarding_complete(merged):
         mark_onboarding_complete(user_id)
 
-    return {"ok": True, "position": len(goals)}
+    sync = _push_goal_to_app(user_id, len(goals), text)
+    return {"ok": True, "position": len(goals), **sync}
 
 
 def _edit_goal(position, text: str) -> dict:
@@ -175,12 +217,16 @@ def _edit_goal(position, text: str) -> dict:
     except (TypeError, ValueError):
         return {"error": f"Position must be a number, got {position!r}."}
     user_id = identity.current().user_id
-    goals = _current_goals(get_user(user_id) or {})
+    user_data = get_user(user_id) or {}
+    goals = _current_goals(user_data)
     if not 1 <= position <= len(goals):
         return {"error": f"No goal at position {position}."}
     goals[position - 1] = text
     _write_goals(user_id, goals)
-    return {"ok": True, "position": position}
+    # No mapped app goal (pre-writethrough or an earlier failed sync): create it now.
+    server_id = user_data.get(_SERVER_ID_FIELDS[position - 1]) or None
+    sync = _push_goal_to_app(user_id, position, text, server_id)
+    return {"ok": True, "position": position, **sync}
 
 
 def _remove_goal(position) -> dict:
@@ -196,9 +242,17 @@ def _remove_goal(position) -> dict:
     removed = goals.pop(position - 1)
     plans = [user_data.get(f, "") for f in _PLAN_GOAL_FIELDS]
     plans.pop(position - 1)
+    server_ids = [user_data.get(f, "") for f in _SERVER_ID_FIELDS]
+    removed_server_id = server_ids.pop(position - 1)
     _write_goals(user_id, goals)
     update_user(user_id, {f: (plans[i] if i < len(plans) else "") for i, f in enumerate(_PLAN_GOAL_FIELDS)})
-    return {"ok": True, "removed": removed}
+    update_user(user_id, {f: (server_ids[i] if i < len(server_ids) else "") for i, f in enumerate(_SERVER_ID_FIELDS)})
+    result = {"ok": True, "removed": removed}
+    if removed_server_id:
+        # MCP has no delete tool yet, so the app-side goal outlives the coached one.
+        result["app_goal_removed"] = False
+        result["note"] = "The matching goal still exists in the app; the participant can delete it from the Goals screen."
+    return result
 
 
 _LOCAL_HANDLERS = {

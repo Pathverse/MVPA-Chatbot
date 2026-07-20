@@ -27,6 +27,11 @@ RESETTABLE_FIELDS = {
     "smart_goal_1": "",
     "smart_goal_2": "",
     "smart_goal_3": "",
+    # Pathverse goal ids behind the slots (goal write-through); cleared on reset so a fresh
+    # profile can never PATCH the previous goals in the app.
+    "goal_server_id_1": "",
+    "goal_server_id_2": "",
+    "goal_server_id_3": "",
     "plan_daily": "",
     "plan_goal_1": "",
     "plan_goal_2": "",

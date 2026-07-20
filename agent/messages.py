@@ -37,6 +37,10 @@ def _all_tools() -> list:
         except Exception:
             logger.exception("MCP tool listing failed; continuing with local tools only")
             return LOCAL_TOOLS
+        # Goal writes go through the local add/edit/remove_goal tools (which write through
+        # to the app themselves) — exposing the MCP write tools too would give the model a
+        # second path that bypasses the coach's goal slots.
+        mcp_tools = [t for t in mcp_tools if t["function"]["name"] not in {"create_goal", "update_goal"}]
         _all_tools_cache = mcp_tools + LOCAL_TOOLS
     return _all_tools_cache
 
