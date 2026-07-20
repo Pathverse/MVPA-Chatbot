@@ -1,11 +1,14 @@
 """Pulls Apple Health MVPA via MCP and syncs it into Firestore — daily minutes, locked weekly totals, trend, and history pruning."""
 import json
+import logging
 from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from pathverse_mcp import mcp_client
 
 from config import TREND_HISTORY_WEEKS
+
+logger = logging.getLogger(__name__)
 from db.user_store import (
     calculate_and_update_trend,
     get_daily_mvpa_range,
@@ -64,6 +67,16 @@ def _fetch_mvpa_minutes_by_day(start_day, end_day):
         for rec in response.get(payload["key"], []):
             rec_day = date.fromisoformat(rec["date"])
             minutes_by_day[rec_day] = minutes_by_day.get(rec_day, 0) + int(rec.get("minutes", 0))
+
+    # Logged either way: silence here would leave "the study has no data for this
+    # participant" indistinguishable from "the sync never ran" when debugging live.
+    if minutes_by_day:
+        logger.info(
+            "MVPA fetch %s..%s returned %d day(s), %d min total",
+            start_day, end_day, len(minutes_by_day), sum(minutes_by_day.values()),
+        )
+    else:
+        logger.info("MVPA fetch %s..%s returned no MVPA rows", start_day, end_day)
     return minutes_by_day
 
 
