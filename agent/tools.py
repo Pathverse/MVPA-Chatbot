@@ -175,13 +175,15 @@ def _push_goal_to_app(user_id: str, position: int, text: str, server_id=None) ->
     try:
         if server_id:
             mcp_client.call_tool("update_goal", {"id": server_id, "title": text})
+            logger.info("goal write-through: updated app goal id=%s for slot %s", server_id, position)
             return {}
         reply = mcp_client.call_tool("create_goal", {"title": text})
         new_id = _extract_goal_id(reply)
         if new_id is None:
-            logger.warning("create_goal reply had no goal id; slot %s left unmapped", position)
+            logger.warning("create_goal reply had no goal id; slot %s left unmapped: %s", position, reply[:300])
             return {"app_sync": "failed"}
         update_user(user_id, {_SERVER_ID_FIELDS[position - 1]: new_id})
+        logger.info("goal write-through: created app goal id=%s for slot %s", new_id, position)
         return {}
     except Exception:
         logger.exception("goal write-through to the app failed for slot %s", position)
