@@ -8,6 +8,7 @@ import openai
 from config import OPENAI_API_KEY, LLM_MODEL, LLM_TEMPERATURE, LLM_TOP_P
 from pathverse_mcp import mcp_client
 from agent import guardrails
+from agent.mcp_args import normalize_mcp_arguments
 from agent.tools import LOCAL_TOOLS, LOCAL_TOOL_NAMES, NUMERIC_FIELDS, call_local_tool
 from study.onboarding import ONBOARDING_QUESTIONS, MULTI_TURN_FIELDS
 from study.context import build_user_context
@@ -68,6 +69,8 @@ def _run_tool_call(tc, this_call_forced: bool, next_field: str | None) -> tuple[
     try:
         args = json.loads(tc.function.arguments)
         if tc.function.name not in LOCAL_TOOL_NAMES:
+            # The model writes dates like a person; the MCP schema wants strict UTC.
+            args = normalize_mcp_arguments(tc.function.name, args)
             return mcp_client.call_tool(tc.function.name, args), False, False
 
         # tool_choice forces THAT update_field is called, not which field it targets; the
