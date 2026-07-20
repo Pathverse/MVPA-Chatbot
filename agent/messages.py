@@ -27,10 +27,17 @@ _all_tools_cache = None
 
 def _all_tools() -> list:
     """Listing the MCP tools is a network call, so it happens on first use rather than at
-    import — otherwise this module can't be imported without live Pathverse credentials."""
+    import — otherwise this module can't be imported without live Pathverse credentials.
+    An unreachable MCP server must not kill the chat: degrade to the local tools for this
+    turn and retry MCP on the next one (the failure is never cached)."""
     global _all_tools_cache
     if _all_tools_cache is None:
-        _all_tools_cache = mcp_client.list_tools() + LOCAL_TOOLS
+        try:
+            mcp_tools = mcp_client.list_tools()
+        except Exception:
+            logger.exception("MCP tool listing failed; continuing with local tools only")
+            return LOCAL_TOOLS
+        _all_tools_cache = mcp_tools + LOCAL_TOOLS
     return _all_tools_cache
 
 
